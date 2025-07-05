@@ -1,0 +1,142 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Partes del cuerpo
+enum BodyPart {
+  CHEST // PECHO
+  BACK // ESPALDA
+  LEGS // PIERNAS
+  TRICEPS // TRICEPS
+  BICEPS // BICEPS
+  SHOULDERS // HOMBROS
+}
+
+// Horarios de comida
+enum MealTime {
+  BREAKFAST // DESAYUNO
+  LUNCH // ALMUERZO
+  SNACK // MERIENDA
+  DINNER // CENA
+}
+
+// Género
+enum Gender {
+  MALE // MASCULINO
+  FEMALE // FEMENINO
+  OTHER // OTRO
+}
+
+model MealPlan {
+  id          String   @id @default(uuid())
+  description String
+  schedule    MealTime
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  client   Client? @relation(fields: [clientId], references: [id])
+  clientId String?
+}
+
+model Trainer {
+  id        String   @id @default(uuid())
+  name      String
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  clients Client[]
+}
+
+model Client {
+  id        String    @id @default(uuid())
+  name      String
+  email     String    @unique
+  password  String
+  height    Float? // in centimeters
+  birthDate DateTime?
+  gender    Gender?
+  active    Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  // Relations
+  mealPlans    MealPlan[]
+  workoutPlans WorkoutPlan[]
+
+  trainer   Trainer? @relation(fields: [trainerId], references: [id])
+  trainerId String?
+}
+
+model WorkoutPlan {
+  id        String   @id @default(uuid())
+  name      String
+  order     Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deleted   Boolean  @default(false)
+
+  // Relations
+  client   Client? @relation(fields: [clientId], references: [id])
+  clientId String?
+
+  routines Routine[]
+}
+
+model Routine {
+  id          String   @id @default(uuid())
+  observation String?
+  reps        Int
+  sets        Int
+  order       Int
+  rest        Int? // time in seconds
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  workoutPlan   WorkoutPlan? @relation(fields: [workoutPlanId], references: [id])
+  workoutPlanId String?
+
+  exercise   Exercise? @relation(fields: [exerciseId], references: [id])
+  exerciseId String?
+
+  weightHistory WeightHistory[]
+}
+
+model WeightHistory {
+  id     String   @id @default(uuid())
+  weight String
+  date   DateTime @default(now())
+  notes  String?
+
+  // Relations
+  routine   Routine? @relation(fields: [routineId], references: [id])
+  routineId String?
+}
+
+model Exercise {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  bodyPart    BodyPart
+  imageUrl    String?
+  videoUrl    String?
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  routines Routine[]
+}
